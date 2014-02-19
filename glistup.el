@@ -1,0 +1,153 @@
+;;;; glistup.el --- glistup facility for Emacs 
+;; 
+;; 
+
+(defconst glistup-mode-buffer-name "*glistup-buffer*"
+  "")
+(defvar glistup-mode-map nil
+  "")
+(unless glistup-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "RET") 'glistup-mode-open-file)
+    (define-key map (kbd "\e") 'glistup-kill-buffer)
+    (define-key map [remap self-insert-command] 'glistup-mode-self-insert-command)
+    (define-key map [remap delete-backward-char] 'glistup-mode-self-insert-command)
+    (setq glistup-mode-map map)
+    ))
+(defvar glistup-mode-pattern nil
+  "")
+(defconst glistup-search-pattern1 "/%s[^/]*$"
+  "search in the filename")
+(defconst glistup-search-pattern2 "%s[^/]*$"
+  "")
+(defconst glistup-search-pattern3 "%s"
+  "search in the file fullpath")
+(defvar glistup-search-pattern glistup-search-pattern1
+  "search pattern in using currently")
+
+(defun glistup-listup (&optional pattern)
+  "list files from GNU Global"
+
+  (interactive)
+  (let ((shell-param)
+	(patterni))
+    
+    (if (null pattern)
+	(setq patterni (concat ""))
+      (setq patterni (concat pattern)))
+    (if (get-buffer glistup-mode-buffer-name)
+	(erase-buffer))
+    (call-process "global" nil (get-buffer-create glistup-mode-buffer-name) nil "--path" (format glistup-search-pattern patterni))
+    (get-buffer glistup-mode-buffer-name)
+    )
+  )
+
+(defun glistup-kill-buffer ()
+  (interactive)
+  (if (or (null glistup-mode-pattern) (equal "" glistup-mode-pattern))
+      (kill-buffer glistup-mode-buffer-name)
+    (progn
+      (setq glistup-mode-pattern (concat ""))
+      ;; todo list up & print status
+      )
+    )
+  )
+
+(defun glistup-change-pattern (arg)
+  (cond
+   ((= 2 arg) (setq glistup-search-pattern glistup-search-pattern2))
+   ((= 3 arg) (setq glistup-search-pattern glistup-search-pattern3))
+   (t (setq glistup-search-pattern glistup-search-pattern1))
+   )
+  )
+
+;; glistup-mode major mode
+(defun glistup-mode (&optional pattern)
+  "glistup-mode Major Moode
+listup files in gtags-mode
+"
+  (interactive)
+  (setq glistup-mode-pattern nil)
+
+  (if (get-buffer glistup-mode-buffer-name)
+      (glistup-kill-buffer))
+
+  ;; (setq glistup-search-pattern glistup-search-pattern1)
+  (switch-to-buffer (glistup-listup pattern))
+  (setq buffer-read-only t)
+
+  (goto-char (point-min))
+  (beginning-of-line)
+
+  (kill-all-local-variables)
+  (use-local-map glistup-mode-map)
+
+  (setq
+   major-mode 'glistup-mode
+   mode-name "glistup-mode")
+  (run-hooks 'glistup-mode-hook)
+  )
+
+(defun glistup-mode-self-insert-command ()
+  "remap 'self-insert-command"
+  (interactive)
+  (let ((glistup-mode-this-key (this-command-keys))
+	(skip-search nil)
+	)
+    (cond
+     ;; del-key
+     ((equal "\^?" glistup-mode-this-key)
+      (if (> (length glistup-mode-pattern) 0)
+	(cond
+	 ((equal "." (substring glistup-mode-pattern -1)) (setq glistup-mode-pattern (substring glistup-mode-pattern 0 -2)))
+	 (t                                               (setq glistup-mode-pattern (substring glistup-mode-pattern 0 -1)))
+	 )
+	(setq skip-search t)
+	)
+      )
+     ;; '.' character to '\.' in pattern
+     ((equal "." glistup-mode-this-key)   (setq glistup-mode-pattern (concat glistup-mode-pattern "\\.")))
+     (t                                   (setq glistup-mode-pattern (concat glistup-mode-pattern glistup-mode-this-key)))
+     )
+    
+    (setq buffer-read-only nil)
+    (if (null skip-search)
+	(glistup-listup glistup-mode-pattern))
+    (setq buffer-read-only t)
+    (goto-char (point-min))
+    (message 
+     "matched(%s), Searching %s ..."
+     (save-excursion
+       (let ((start)
+	     (end)
+	     )
+	 (goto-char (point-min))
+	 (setq start (point))
+	 (goto-char (point-max))
+	 (setq end (point))
+	 (count-lines start end)
+	 )
+       )
+     glistup-mode-pattern)
+    )
+  )
+
+(defun glistup-mode-open-file ()
+  ""
+  (interactive)
+  (save-excursion
+    (let ((start)
+	  (end)
+	  (filename))
+      (beginning-of-line)
+      (setq start (point))
+      (end-of-line)
+      (setq end (point))
+      (setq filename (buffer-substring start end))
+      (find-file (expand-file-name filename))
+      )
+    (kill-buffer glistup-mode-buffer-name)
+    )
+  )
+
+(provide 'glistup)
