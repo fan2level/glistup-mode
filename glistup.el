@@ -1,11 +1,38 @@
-;;;; glistup.el --- glistup facility for Emacs 
+;;; glistup.el --- list up files in `gtags'
+
+;; Copyright (C) 2014 SEONGBAEK KANG
+
+;; Author: SEONGBAEK KANG
+;; Maintainer:
+;; Created: 26 Feb 2014
+;; Keywords: c, `gtags'
+;; Package-Version:
+;; Package-Requires:
+
+;; This file is not part of GNU Emacs.
+
+;; see <http://www.gnu.org/licenses/>
+
+;;; Commentary:
+
+;; To use glistup-mode, .emacs file as below
 ;; 
+;; (add-to-list 'load-path "/path-to/")
+;; (require 'glistup)
 ;; 
+;; To use glistup-mode,
+;; make tag file using gtags and
+;; 
+;; M-x glistup-mode
+
+;;; History
+
+;;; Code:
 
 (defconst glistup-mode-buffer-name "*glistup-buffer*"
-  "")
+  "Buffer Name")
 (defvar glistup-mode-map nil
-  "")
+  "Keymap used in glistup mode")
 (unless glistup-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "RET") 'glistup-mode-open-file)
@@ -15,15 +42,15 @@
     (setq glistup-mode-map map)
     ))
 (defvar glistup-mode-pattern nil
-  "")
+  "Search pattern")
 (defconst glistup-search-pattern1 "/%s[^/]*$"
-  "search in the filename")
+  "Search pattern for filename")
 (defconst glistup-search-pattern2 "%s[^/]*$"
-  "")
+  "Search pattern for filepath")
 (defconst glistup-search-pattern3 "%s"
-  "search in the file fullpath")
+  "")
 (defvar glistup-search-pattern glistup-search-pattern1
-  "search pattern in using currently")
+  "Search pattern in using currently")
 
 (defun glistup-listup (&optional pattern)
   "list files from GNU Global"
@@ -61,7 +88,6 @@
    )
   )
 
-;; glistup-mode major mode
 (defun glistup-mode (&optional pattern)
   "glistup-mode Major Moode
 listup files in gtags-mode
@@ -151,3 +177,5 @@ listup files in gtags-mode
   )
 
 (provide 'glistup)
+
+;;; glistup.el ends here
