@@ -52,10 +52,12 @@
 (defvar glistup-search-pattern glistup-search-pattern1
   "Search pattern in using currently")
 
-(defun glistup-listup (&optional pattern)
-  "list files from GNU Global"
+(defvar glistup-files nil
+  "Files which is listup")
 
-  (interactive)
+(defun glistup-listup (&optional pattern)
+  "list files using GNU Global
+return result buffer which name is `glistup-mode-buffer-name'"
   (let ((shell-param)
 	(patterni))
     
@@ -64,9 +66,21 @@
       (setq patterni (concat pattern)))
     (if (get-buffer glistup-mode-buffer-name)
 	(erase-buffer))
-    (call-process "global" nil (get-buffer-create glistup-mode-buffer-name) nil "--path" (format glistup-search-pattern patterni))
-    (get-buffer glistup-mode-buffer-name)
-    )
+
+    (if (not glistup-files)
+    	(setq glistup-files
+    	      (with-temp-buffer
+    		(call-process "global" nil (current-buffer) nil "--path" (format glistup-search-pattern ""))
+    		(split-string (buffer-string) "[\r\n]+" t))))
+
+    (switch-to-buffer (get-buffer-create glistup-mode-buffer-name))
+    (dolist (elt glistup-files)
+      (if (string-match patterni (file-name-nondirectory elt))
+	  (insert elt "\n")
+       )
+      )
+
+    glistup-mode-buffer-name)
   )
 
 (defun glistup-kill-buffer ()
@@ -90,15 +104,14 @@
 
 (defun glistup-mode (&optional pattern)
   "glistup-mode Major Moode
-listup files in gtags-mode
-"
+listup files in gtags-mode"
   (interactive)
   (setq glistup-mode-pattern nil)
+  (setq glistup-files nil)
 
   (if (get-buffer glistup-mode-buffer-name)
       (glistup-kill-buffer))
 
-  ;; (setq glistup-search-pattern glistup-search-pattern1)
   (switch-to-buffer (glistup-listup pattern))
   (setq buffer-read-only t)
 
@@ -145,14 +158,14 @@ listup files in gtags-mode
      "matched(%s), Searching %s ..."
      (save-excursion
        (let ((start)
-	     (end)
-	     )
-	 (goto-char (point-min))
-	 (setq start (point))
-	 (goto-char (point-max))
-	 (setq end (point))
-	 (count-lines start end)
-	 )
+    	     (end)
+    	     )
+    	 (goto-char (point-min))
+    	 (setq start (point))
+    	 (goto-char (point-max))
+    	 (setq end (point))
+    	 (count-lines start end)
+    	 )
        )
      glistup-mode-pattern)
     )
