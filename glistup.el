@@ -106,25 +106,29 @@ return result buffer which name is `glistup-mode-buffer-name'"
   "glistup-mode Major Moode
 listup files in gtags-mode"
   (interactive)
-  (setq glistup-mode-pattern nil)
-  (setq glistup-files nil)
+  (require 'gtags)
+  (if (null (gtags-get-rootpath))
+      (error "no tag files!!!")
+    (setq glistup-mode-pattern nil)
+    (setq glistup-files nil)
 
-  (if (get-buffer glistup-mode-buffer-name)
-      (glistup-kill-buffer))
+    (if (get-buffer glistup-mode-buffer-name)
+	(glistup-kill-buffer))
 
-  (switch-to-buffer (glistup-listup pattern))
-  (setq buffer-read-only t)
+    (switch-to-buffer (glistup-listup pattern))
+    (setq buffer-read-only t)
 
-  (goto-char (point-min))
-  (beginning-of-line)
+    (goto-char (point-min))
+    (beginning-of-line)
 
-  (kill-all-local-variables)
-  (use-local-map glistup-mode-map)
+    (kill-all-local-variables)
+    (use-local-map glistup-mode-map)
 
-  (setq
-   major-mode 'glistup-mode
-   mode-name "glistup-mode")
-  (run-hooks 'glistup-mode-hook)
+    (setq
+     major-mode 'glistup-mode
+     mode-name "glistup-mode")
+    (run-hooks 'glistup-mode-hook)
+    )
   )
 
 (defun glistup-mode-self-insert-command ()
