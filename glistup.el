@@ -43,11 +43,11 @@
     ))
 (defvar glistup-mode-pattern nil
   "Search pattern")
-(defconst glistup-search-pattern1 "/%s[^/]*$"
-  "Search pattern for filename")
-(defconst glistup-search-pattern2 "%s[^/]*$"
-  "Search pattern for filepath")
-(defconst glistup-search-pattern3 "%s"
+(defconst glistup-search-pattern1 "^%s"
+  "pattern for filename starting with string")
+(defconst glistup-search-pattern2 "%s"
+  "pattern for filename with string")
+(defconst glistup-search-pattern3 "^%s"	;fixme
   "")
 (defvar glistup-search-pattern glistup-search-pattern1
   "Search pattern in using currently")
@@ -155,7 +155,8 @@ listup files in gtags-mode"
     
     (setq buffer-read-only nil)
     (if (null skip-search)
-	(glistup-listup glistup-mode-pattern))
+	(glistup-listup
+	 (format glistup-search-pattern glistup-mode-pattern)))
     (setq buffer-read-only t)
     (goto-char (point-min))
     (message 
@@ -171,7 +172,7 @@ listup files in gtags-mode"
     	 (count-lines start end)
     	 )
        )
-     glistup-mode-pattern)
+     (replace-regexp-in-string "\\\\" "" glistup-mode-pattern))
     )
   )
 
