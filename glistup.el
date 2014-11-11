@@ -55,11 +55,20 @@
 (defvar glistup-files nil
   "Files which is listup")
 
+(defvar glistup-gpath-sha1 nil
+  "")
+
+(defvar glistup-debug-elapse nil
+  "delay time of listup")
+
 (defun glistup-listup (&optional pattern)
   "list files using GNU Global
 return result buffer which name is `glistup-mode-buffer-name'"
   (let ((shell-param)
-	(patterni))
+	(patterni)
+	(gpath-sha1)
+	(time-start (current-time))
+	)
     
     (if (null pattern)
 	(setq patterni (concat ""))
@@ -67,11 +76,18 @@ return result buffer which name is `glistup-mode-buffer-name'"
     (if (get-buffer glistup-mode-buffer-name)
 	(erase-buffer))
 
-    (if (not glistup-files)
-    	(setq glistup-files
-    	      (with-temp-buffer
-    		(call-process "global" nil (current-buffer) nil "--path" (format glistup-search-pattern ""))
-    		(split-string (buffer-string) "[\r\n]+" t))))
+    (setq gpath-sha1 (sha1 
+		      (with-temp-buffer
+			(insert-file-contents (concat (gtags-get-rootpath) "GPATH"))
+			(buffer-string))))
+    (if (not (equal glistup-gpath-sha1 gpath-sha1))
+	(progn
+	  (setq glistup-gpath-sha1 gpath-sha1)
+	  (setq glistup-files
+		(with-temp-buffer
+		  (call-process "global" nil (current-buffer) nil "--path" (format glistup-search-pattern ""))
+		  (split-string (buffer-string) "[\r\n]+" t))))
+      )
 
     (switch-to-buffer (get-buffer-create glistup-mode-buffer-name))
     (dolist (elt glistup-files)
@@ -80,6 +96,7 @@ return result buffer which name is `glistup-mode-buffer-name'"
        )
       )
 
+    (setq glistup-debug-elapse (format-time-string "%3N" (time-since time-start)))
     glistup-mode-buffer-name)
   )
 
@@ -110,12 +127,18 @@ listup files in gtags-mode"
   (if (null (gtags-get-rootpath))
       (error "no tag files!!!")
     (setq glistup-mode-pattern nil)
-    (setq glistup-files nil)
+    ;; (setq glistup-files nil)
 
     (if (get-buffer glistup-mode-buffer-name)
 	(glistup-kill-buffer))
 
-    (switch-to-buffer (glistup-listup pattern))
+    (let ((time-start (current-time)))
+
+      (switch-to-buffer (glistup-listup pattern))
+
+      (setq glistup-debug-elapse (format-time-string "%3N" (time-since time-start)))
+      (message "delay ... %s" glistup-debug-elapse)
+      )
     (setq buffer-read-only t)
 
     (goto-char (point-min))
@@ -160,7 +183,8 @@ listup files in gtags-mode"
     (setq buffer-read-only t)
     (goto-char (point-min))
     (message 
-     "matched(%s), Searching %s ..."
+     "delay(%s) matched(%s), Searching %s ..."
+     glistup-debug-elapse
      (save-excursion
        (let ((start)
     	     (end)
