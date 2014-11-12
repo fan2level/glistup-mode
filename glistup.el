@@ -76,13 +76,17 @@ return result buffer which name is `glistup-mode-buffer-name'"
     (if (get-buffer glistup-mode-buffer-name)
 	(erase-buffer))
 
-    (setq gpath-sha1 (sha1 
-		      (with-temp-buffer
-			(insert-file-contents (concat (gtags-get-rootpath) "GPATH"))
-			(buffer-string))))
-    (if (not (equal glistup-gpath-sha1 gpath-sha1))
+    ;; delay cause
+    ;; (setq gpath-sha1 (sha1 
+    ;; 		      (with-temp-buffer
+    ;; 			(insert-file-contents (concat (gtags-get-rootpath) "GPATH"))
+    ;; 			(buffer-string))))
+    ;; (setq glistup-debug-elapse (format-time-string "%3N " (time-since time-start)))
+    ;; (if (not (equal glistup-gpath-sha1 gpath-sha1))
+    (if (null glistup-files)
 	(progn
 	  (setq glistup-gpath-sha1 gpath-sha1)
+	  (setq time-start (current-time))
 	  (setq glistup-files
 		(with-temp-buffer
 		  (call-process "global" nil (current-buffer) nil "--path" (format glistup-search-pattern ""))
@@ -95,8 +99,8 @@ return result buffer which name is `glistup-mode-buffer-name'"
 	  (insert elt "\n")
        )
       )
+    (setq glistup-debug-elapse (format-time-string "%3N " (time-since time-start)))
 
-    (setq glistup-debug-elapse (format-time-string "%3N" (time-since time-start)))
     glistup-mode-buffer-name)
   )
 
