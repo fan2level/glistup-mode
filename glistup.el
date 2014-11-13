@@ -43,20 +43,17 @@
     ))
 (defvar glistup-mode-pattern nil
   "Search pattern")
-(defconst glistup-search-pattern1 "^%s"
-  "pattern for filename starting with string")
-(defconst glistup-search-pattern2 "%s"
-  "pattern for filename with string")
-(defconst glistup-search-pattern3 "^%s"	;fixme
+(defconst glistup-search-pattern1 "/%s[^/]*$"
+  "Search pattern for filename")
+(defconst glistup-search-pattern2 "%s[^/]*$"
+  "Search pattern for filepath")
+(defconst glistup-search-pattern3 "%s"
   "")
 (defvar glistup-search-pattern glistup-search-pattern1
   "Search pattern in using currently")
 
 (defvar glistup-files nil
   "Files which is listup")
-
-(defvar glistup-gpath-sha1 nil
-  "")
 
 (defvar glistup-debug-elapse nil
   "delay time of listup")
@@ -76,29 +73,8 @@ return result buffer which name is `glistup-mode-buffer-name'"
     (if (get-buffer glistup-mode-buffer-name)
 	(erase-buffer))
 
-    ;; delay cause
-    ;; (setq gpath-sha1 (sha1 
-    ;; 		      (with-temp-buffer
-    ;; 			(insert-file-contents (concat (gtags-get-rootpath) "GPATH"))
-    ;; 			(buffer-string))))
-    ;; (setq glistup-debug-elapse (format-time-string "%3N " (time-since time-start)))
-    ;; (if (not (equal glistup-gpath-sha1 gpath-sha1))
-    (if (null glistup-files)
-	(progn
-	  (setq glistup-gpath-sha1 gpath-sha1)
-	  (setq time-start (current-time))
-	  (setq glistup-files
-		(with-temp-buffer
-		  (call-process "global" nil (current-buffer) nil "--path" (format glistup-search-pattern ""))
-		  (split-string (buffer-string) "[\r\n]+" t))))
-      )
-
-    (switch-to-buffer (get-buffer-create glistup-mode-buffer-name))
-    (dolist (elt glistup-files)
-      (if (string-match patterni (file-name-nondirectory elt))
-	  (insert elt "\n")
-       )
-      )
+    (call-process "global" nil (get-buffer-create glistup-mode-buffer-name) nil "--path" (format glistup-search-pattern patterni))
+    ;; (get-buffer glistup-mode-buffer-name)
     (setq glistup-debug-elapse (format-time-string "%3N " (time-since time-start)))
 
     glistup-mode-buffer-name)
@@ -182,8 +158,7 @@ listup files in gtags-mode"
     
     (setq buffer-read-only nil)
     (if (null skip-search)
-	(glistup-listup
-	 (format glistup-search-pattern glistup-mode-pattern)))
+	(glistup-listup glistup-mode-pattern))
     (setq buffer-read-only t)
     (goto-char (point-min))
     (message 
